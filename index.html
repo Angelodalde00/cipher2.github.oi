@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cipher Library Management</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('123.jpg'); 
+            background-size: cover; 
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        header {
+            background-color: rgba(0, 123, 255, 0.8);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 28px;
+        }
+        h2 {
+            color: #007bff;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+        }
+        input[type="text"], input[type="number"], select {
+            width: calc(100% - 22px);
+            padding: 12px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+        }
+        button {
+            background-color: #007bff; 
+            color: white; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-top: 15px; 
+            width: calc(50% - 5px); 
+        }
+        button:hover {
+            background-color: #0056b3; 
+        }
+        .history {
+            margin-top: 20px; 
+        }
+        .history div {
+            background-color: #e9ecef; 
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px; 
+        }
+        .message {
+            color: green; 
+            margin-top: 15px; 
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Cipher Library Management</h1>
+</header>
+
+<div class="container">
+    <h2>Select a Cipher</h2>
+    <label for="cipherSelect">Choose Cipher:</label>
+    <select id="cipherSelect" aria-label="Select cipher" onchange="updateCipherOptions()">
+        <option value="caesar">Caesar Cipher</option>
+        <option value="vigenere">Vigenère Cipher</option>
+    </select>
+
+    <div id="caesarOptions" class="cipherOptions">
+        <label for="caesarShift">Shift (1-25):</label>
+        <input type="number" id="caesarShift" min="1" max="25" value="3" aria-label="Caesar shift value">
+    </div>
+
+    <div id="vigenereOptions" class="cipherOptions" style="display:none;">
+        <label for="vigenereKey">Keyword:</label>
+        <input type="text" id="vigenereKey" required aria-label="Vigenère keyword">
+    </div>
+
+    <label for="text">Text:</label>
+    <input type="text" id="textInput" required aria-label="Text to encrypt/decrypt">
+
+    <button onclick="processCipher()">Submit</button>
+
+    <div class="message" id="message"></div>
+
+    <h3>History:</h3>
+    <div id="historyContainer" class="history"></div> 
+    
+    <!-- Clear History Button -->
+    <button onclick="clearHistory()">Clear History</button>
+</div>
+
+<script>
+// Function to update visible options based on selected cipher
+function updateCipherOptions() {
+    const selectedCipher = document.getElementById('cipherSelect').value;
+
+    document.getElementById('caesarOptions').style.display = selectedCipher === 'caesar' ? 'block' : 'none';
+    document.getElementById('vigenereOptions').style.display = selectedCipher === 'vigenere' ? 'block' : 'none';
+}
+
+// Function to process the selected cipher
+function processCipher() {
+    const selectedCipher = document.getElementById('cipherSelect').value;
+    const text = document.getElementById('textInput').value.toUpperCase();
+    
+    let result = '';
+    
+    if (selectedCipher === 'caesar') {
+        const shift = parseInt(document.getElementById('caesarShift').value);
+        
+        if (shift < 1 || shift > 25) {
+          displayMessage("Shift must be between 1 and 25.");
+          return;
+        }
+
+        result = caesarCipher(text, shift);
+        
+    } else if (selectedCipher === 'vigenere') {
+        const keyword = document.getElementById('vigenereKey').value.toUpperCase();
+        
+        if (!keyword) {
+          displayMessage("Keyword cannot be empty.");
+          return;
+        }
+
+        result = vigenereCipher(text, keyword);
+    }
+
+    addToHistory(result); // Add result to history
+}
+
+// Caesar Cipher function
+function caesarCipher(text, shift) {
+    let result = '';
+    
+    for (let i = 0; i < text.length; i++) {
+        let char = text[i];
+        
+        if (char >= 'A' && char <= 'Z') { // Only process alphabetic characters
+            let code = ((char.charCodeAt(0) - 'A'.charCodeAt(0) + shift) % 26) + 'A'.charCodeAt(0);
+            result += String.fromCharCode(code); // Append processed character to result
+        } else {
+          result += char; // Non-alphabetic characters remain unchanged
+      }
+   }
+
+   return result; // Return the final encrypted text
+}
+
+// Vigenère Cipher function
+function vigenereCipher(text, keyword) {
+   let result = '';
+   let keywordIndex = 0;
+
+   for (let i = 0; i < text.length; i++) {
+       let char = text[i];
+       
+       if (char >= 'A' && char <= 'Z') { // Only process alphabetic characters
+           let shift = keyword[keywordIndex % keyword.length].charCodeAt(0) - 'A'.charCodeAt(0);
+           let code = ((char.charCodeAt(0) - 'A'.charCodeAt(0) + shift) % 26) + 'A'.charCodeAt(0);
+           result += String.fromCharCode(code); // Append processed character to result
+           keywordIndex++; // Move to next character in the keyword
+       } else {
+           result += char; // Non-alphabetic characters remain unchanged
+       }
+   }
+
+   return result; // Return the final encrypted text
+}
+
+// Function to add results to history
+function addToHistory(result) {
+   const historyContainer = document.getElementById('historyContainer');
+   const entryDiv = document.createElement('div');
+   entryDiv.textContent = result; // Display the result in history
+   historyContainer.appendChild(entryDiv);
+   displayMessage("Result added to history.");
+}
+
+// Function to clear the history of results
+function clearHistory() {
+   const historyContainer = document.getElementById('historyContainer');
+   historyContainer.innerHTML = ''; // Clear all entries in the history container
+   displayMessage("History cleared.");
+}
+
+// Function to display messages to users
+function displayMessage(msg) {
+   const messageDiv = document.getElementById('message');
+   messageDiv.textContent = msg;
+
+   setTimeout(() => { messageDiv.textContent = ''; }, 3000); // Clear message after a few seconds
+}
+</script>
+
+</body>
+</html>
